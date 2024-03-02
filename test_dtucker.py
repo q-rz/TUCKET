@@ -5,8 +5,13 @@ def mat_mat_mul(A, B):
     return (A[:, None, :] * B.transpose(0, 1)[None, :, :]).sum(dim = 2)
 
 class DTucker:
+    """
+    D-Tucker for Tucker decomposition range queries
+    adapted from the authors' MATLAB implementation at https://datalab.snu.ac.kr/dtucker/
+    """
     @torch.no_grad()
     def __init__(self, X, ranks, tol, maxiters):
+        """preproces slices"""
         self.tol = tol
         self.maxiters = maxiters
         self.tlen = X.size(dim = 0)
@@ -29,9 +34,8 @@ class DTucker:
         self.U = U.permute(*([self.n_dims - 2, self.n_dims - 1] + list(range(self.n_dims - 2))))[:, : self.decomp_rank].clone().detach()
         self.S = S.permute(*([self.n_dims - 2] + list(range(self.n_dims - 2))))[: self.decomp_rank].clone().detach()
         self.V = VH.permute(*([self.n_dims - 1, self.n_dims - 2] + list(range(self.n_dims - 2))))[:, : self.decomp_rank].clone().detach()
-    def iter_slices(self):
-        return itertools.product(*[range(siz) for siz in self.perm_sizes[2 :]])
     def init_tucker(self, U, perm_ranks): # D-init
+        """initialize the Tucker decomposition"""
         A = [None for p in range(self.n_dims)]
         US = U * self.S
         _, A[0] = mat_svd(US.flatten(start_dim = 1), perm_ranks[0])
@@ -44,6 +48,7 @@ class DTucker:
             Y = tensor_mat_mul(Y, A[p].T, dim = p)
         return A
     def update_tucker(self, U, A): # D-update
+        """update the factor matrices and the core tensor"""
         AT = [Ap.T for Ap in A]
         B = [None for p in range(self.n_dims)]
         # first mode
@@ -65,6 +70,7 @@ class DTucker:
         return G, B
     @torch.no_grad()
     def query_tucker(self, t0, t1): # [t0, t1)
+        """answer a range query of Tucker decomposition"""
         norm2 = self.norm2 - tensor_norm2(self.U[: t0] * self.S).item() - tensor_norm2(self.U[t1 :] * self.S).item()
         perm_ranks = deepcopy(self.perm_ranks)
         perm_ranks[0] = min(perm_ranks[0], t1 - t0)

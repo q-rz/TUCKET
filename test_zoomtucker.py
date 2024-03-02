@@ -1,6 +1,7 @@
 from inc.tucker import *
 
 class ZoomBlock:
+    """block of Zoom-Tucker"""
     @torch.no_grad()
     def __init__(self, t0, t1, X, ranks, tol, maxiters):
         self.t0 = t0
@@ -11,8 +12,13 @@ class ZoomBlock:
         return tucker_partial(self.tucker, t0 = max(t0, self.t0) - self.t0, t1 = min(t1, self.t1) - self.t0, qr = qr)
 
 class ZoomTucker:
+    """
+    Zoom-Tucker
+    adapted from the authors' MATLAB implementation at https://datalab.snu.ac.kr/zoomtucker/
+    """
     @torch.no_grad()
     def __init__(self, X, block_size, ranks, tol, maxiters):
+        """preprocess blocks"""
         self.cfg = Dict(ranks = deepcopy(ranks), tol = tol, maxiters = maxiters)
         self.block_size = block_size
         self.n_dims = len(ranks)
@@ -20,6 +26,7 @@ class ZoomTucker:
         self.T = X.size(dim = 0)
         self.blocks = [ZoomBlock(t0, min(t0 + self.block_size, self.T), X = X[t0 : min(t0 + self.block_size, self.T)], **self.cfg) for t0 in trange(0, self.T, self.block_size)]
     def query_tucker(self, t0, t1): # [t0, t1)
+        """answer a range query by stitching blocks"""
         hits = [self.blocks[i] for i in range(t0 // self.block_size, (t1 - 1) // self.block_size + 1)]
         tuckers = [
             block.tucker if t0 <= block.t0 and t1 >= block.t1 else block.partial_tucker(t0, t1, qr = True)

@@ -1,6 +1,7 @@
 from inc.tucker import *
 
 class TucketNode:
+    """node of TUCKET"""
     def __init__(self, t0, t1, l = None, r = None, built = None, norm2 = 0., tucker = None):
         self.t0 = t0
         self.t1 = t1
@@ -11,22 +12,28 @@ class TucketNode:
         self.tucker = tucker
     @property
     def tm(self):
+        """middle time"""
         return (self.t0 + self.t1) >> 1
     @property
     def tlen(self):
+        """time range length"""
         return self.t1 - self.t0
     def build(self, X, ranks, tol, maxiters):
+        """preprocess the Tucker decomposition of the node"""
         self.norm2 = tensor_norm2(X)
         self.tucker, fit = tucker_als(X, ranks, tol, maxiters, norm2 = self.norm2, verbose = False) # not using mat_svd_eigh due to its numerical instability
         self.built = True
     def stitch(self, ranks, tol, maxiters):
+        """stitch the Tucker decompositions of children nodes"""
         self.norm2 = self.l.norm2 + self.r.norm2
         self.tucker, fit = tucker_stitch([self.l.tucker, self.r.tucker], ranks, tol, maxiters, norm2 = self.norm2, verbose = False)
         self.built = True
     def partial_tucker(self, t0, t1, qr = True):
+        """approximate a subtensor Tucker decomposition"""
         return tucker_partial(self.tucker, t0 = max(t0, self.t0) - self.t0, t1 = min(t1, self.t1) - self.t0, qr = qr)
 
 class TucketTree: # time starts from 0
+    """stream segment tree of TUCKET"""
     def __init__(self, ranks, tol, maxiters, alloc = 1):
         self.cfg = Dict(ranks = deepcopy(ranks), tol = tol, maxiters = maxiters)
         self.n_dims = len(ranks)
@@ -37,6 +44,7 @@ class TucketTree: # time starts from 0
         self.nodes = [None for _ in range(2 ** (math.ceil(math.log2(alloc)) + 1) - 1)]
         ##self.hits_logs = []
     def _new_node(self, t0, t1, **kwargs):
+        """create a new node"""
         node_id = self.n_nodes
         self.n_nodes += 1
         if node_id >= len(self.nodes):
@@ -44,6 +52,7 @@ class TucketTree: # time starts from 0
         self.nodes[node_id] = TucketNode(t0 = t0, t1 = t1, **kwargs)
         return self.nodes[node_id]
     def _insert(self, node, t, Xt):
+        """insert a leaf node"""
         if t == node.t0 and t + 1 == node.t1: # leaf node
             node.build(X = Xt, **self.cfg)
         elif t < node.tm: # go to left child
@@ -57,6 +66,7 @@ class TucketTree: # time starts from 0
             if t + 1 == node.t1:
                 node.stitch(**self.cfg)
     def append(self, Xt):
+        """append a tensor slice"""
         t = self.tlen
         self.tlen += 1
         if self.root is None:
@@ -66,6 +76,7 @@ class TucketTree: # time starts from 0
             self.root = self._new_node(t0 = 0, t1 = old_root.t1 << 1, l = old_root)
         self._insert(self.root, t, Xt[None])
     def _recall(self, node, t0, t1, prune, hits: list):
+        """find a pruned hit set"""
         if node.built and (t1 - t0) >= node.tlen * prune:
             hits.append(node)
         elif t1 <= node.tm:
@@ -76,6 +87,7 @@ class TucketTree: # time starts from 0
             self._recall(node.l, t0, node.tm, prune, hits)
             self._recall(node.r, node.tm, t1, prune, hits)
     def _query_norm2(self, node, t0, t1):
+        """find the squared norm of the subtensor [t0, t1)"""
         if t0 == node.t0 and t1 == node.t1:
             return node.norm2
         elif t1 <= node.tm:
@@ -85,6 +97,7 @@ class TucketTree: # time starts from 0
         else:
             return self._query_norm2(node.l, t0, node.tm) + self._query_norm2(node.r, node.tm, t1)
     def query_tucker(self, t0, t1, prune): # [t0, t1)
+        """answer a range query by stitching the hit set"""
         norm2 = self._query_norm2(self.root, t0, t1)
         hits = []
         self._recall(self.root, t0 = t0, t1 = t1, prune = prune, hits = hits)

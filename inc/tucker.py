@@ -4,11 +4,15 @@ Tucker = namedtuple('Tucker', 'G U') # core G, factors U
 
 @torch.no_grad()
 def tucker_zeros(sizes, ranks, dtype, device):
+    """Tucker decomposition of an empty tensor"""
     return Tucker(G = torch.zeros(*ranks, dtype = dtype, device = device), U = [torch.zeros(sizes[p], ranks[p], dtype = dtype, device = device) for p in range(len(sizes))]), 1.
 
 @torch.no_grad()
 def tucker_als(X, ranks, tol, maxiters, norm2 = None, verbose = False, mat_svd_fn = mat_svd): # pads zeros if rank > size
-    # adapted from https://gitlab.com/tensors/tensor_toolbox/-/blob/dev/tucker_als.m
+    """
+    Tucker-ALS for Tucker decomposition
+    adapted from the MATLAB implementation at https://gitlab.com/tensors/tensor_toolbox/-/blob/dev/tucker_als.m
+    """
     n_dims = len(ranks)
     assert n_dims > 1
     if norm2 is None:
@@ -45,6 +49,7 @@ def tucker_als(X, ranks, tol, maxiters, norm2 = None, verbose = False, mat_svd_f
 
 @torch.no_grad()
 def tucker_stitch(tuckers, ranks, tol, maxiters, norm2, verbose = False, mat_svd_fn = mat_svd):
+    """stitch subtensor Tucker decompositions along the first mode"""
     n_dims = len(ranks)
     assert n_dims > 1
     sizes = [Up.size(dim = 0) for Up in tuckers[0].U]
@@ -99,6 +104,7 @@ def tucker_stitch(tuckers, ranks, tol, maxiters, norm2, verbose = False, mat_svd
 
 @torch.no_grad()
 def tucker_partial(tucker, t0, t1, qr = True): # [t0, t1)
+    """approximate subtensor Tucker decomposition"""
     G = tucker.G
     U = [Up.clone() if p != 0 else Up for p, Up in enumerate(tucker.U)]
     if qr:
