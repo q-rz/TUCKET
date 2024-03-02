@@ -2,11 +2,7 @@
 
 A tensor time series data structure for efficient and accurate factor analysis over time ranges
 
-## Datasets
-
-Please put the datasets in the folder `inputs/`.
-
-**Note:** Due to the large sizes of datasets, please email `rq5 AT illinois DOT edu` to request for the datasets.
+**Note:** Due to the large sizes of datasets, please email `rq5 AT illinois DOT edu` to request for the datasets and put the datasets in the folder `inputs/`.
 
 ## Dependencies
 
