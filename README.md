@@ -25,4 +25,4 @@ chmod +x scripts/*.sh
 where:
 - `{method}` can be `tuckerals` / `dtucker` / `zoomtucker` / `tucket` / `tucket_zoomtuckerstitch`;
 - `{dataset}` can be `airquality` / `traffic` / `usstock` / `krstock`;
-- `{device}` is the device for PyTorch (e.g., `cuda:0` or `cpu`).
+- `{device}` is the device for PyTorch CUDA (e.g., `cuda:0` or `cpu`).
