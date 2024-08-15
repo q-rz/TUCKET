@@ -13,7 +13,7 @@ The code was tested under the following dependencies:
 
 ## Datasets
 
-Please download datasets at [our HuggingFace repo](https://huggingface.co/datasets/q-rz/VLDB25-TUCKET) and put them into the folder `inputs/`.
+Please download datasets and corresponding queries at [our HuggingFace repo](https://huggingface.co/datasets/q-rz/VLDB25-TUCKET) and put them into the folder `inputs/`.
 
 ## Usage
 
