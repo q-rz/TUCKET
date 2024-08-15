@@ -2,6 +2,8 @@
 
 A tensor time series data structure for efficient and accurate factor analysis over time ranges
 
+<center><img src="https://raw.githubusercontent.com/q-rz/TUCKET/main/fig-rqa.svg" alt="Illustration of TUCKET" style="max-width:500px;width:100%;" /></center>
+
 ## Dependencies
 
 The code was tested under the following dependencies:
