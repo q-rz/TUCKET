@@ -2,8 +2,6 @@
 
 A tensor time series data structure for efficient and accurate factor analysis over time ranges
 
-**Note:** Due to the large sizes of datasets, please email `rq5 AT illinois DOT edu` to request for the datasets and put the datasets in the folder `inputs/`.
-
 ## Dependencies
 
 The code was tested under the following dependencies:
@@ -12,6 +10,10 @@ The code was tested under the following dependencies:
 - NumPy 1.26.3
 - PyTorch 2.1.2
 - CUDA 12.2
+
+## Datasets
+
+Please download datasets at [our HuggingFace repo](https://huggingface.co/datasets/q-rz/VLDB25-TUCKET) and put them into the folder `inputs/`.
 
 ## Usage
 
